@@ -1,9 +1,6 @@
 package dev.kinau.resourcepackvalidator;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import dev.kinau.resourcepackvalidator.atlas.TextureAtlas;
 import dev.kinau.resourcepackvalidator.cache.AssetDictionary;
 import dev.kinau.resourcepackvalidator.cache.NamespaceJsonCache;
@@ -28,6 +25,8 @@ import java.util.stream.Collectors;
 @Getter
 public class ValidationJob {
 
+    @Getter
+    private final Gson gson = new Gson();
     private final File rootDir;
     private final ValidatorRegistry registry;
     private final McMetaFile mcMetaFile;
@@ -35,9 +34,9 @@ public class ValidationJob {
     private final List<Overlay> overlays;
     private final Map<OverlayNamespace, NamespaceJsonCache> jsonCache = new HashMap<>();
     private final Map<OverlayNamespace, NamespaceTextureCache> textureCache = new HashMap<>();
-    private final Map<OverlayNamespace, TextureAtlas> textureAtlas = new HashMap<>();
     private final AssetDictionary assetDictionary;
     private final FontProviderFactory fontProviderFactory;
+    private final TextureAtlas textureAtlas;
 
     public ValidationJob(File rootDir, ValidatorRegistry registry) {
         this.rootDir = rootDir;
@@ -45,12 +44,12 @@ public class ValidationJob {
         this.mcMetaFile = readMcMeta();
         this.overlays = loadOverlays();
         this.namespaces = loadNamespaces();
+        this.textureAtlas = new TextureAtlas(rootDir, gson);
         namespaces.forEach(namespace -> {
             jsonCache.put(namespace, new NamespaceJsonCache(namespace));
             textureCache.put(namespace, new NamespaceTextureCache(namespace));
-            textureAtlas.put(namespace, new TextureAtlas(namespace));
         });
-        this.assetDictionary = new AssetDictionary().load();
+        this.assetDictionary = new AssetDictionary().load(gson);
         this.fontProviderFactory = new FontProviderFactory();
     }
 
@@ -84,7 +83,7 @@ public class ValidationJob {
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .toList());
-            namespaces.stream().filter(overlayNamespace1 -> overlayNamespace1.getOverlay() == null).findAny().ifPresent(rootNamespace -> {
+            namespaces.stream().filter(overlayNamespace1 -> overlayNamespace1.getOverlay() == null).forEach(rootNamespace -> {
                 overlayNamespace.getUnderlyingOverlays().add(rootNamespace);
             });
         });

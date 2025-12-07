@@ -15,14 +15,12 @@ import dev.kinau.resourcepackvalidator.validator.font.FontCharacterUsageValidato
 import dev.kinau.resourcepackvalidator.validator.font.FontProviderMapper;
 import dev.kinau.resourcepackvalidator.validator.font.FontTextureExistsValidator;
 import dev.kinau.resourcepackvalidator.validator.general.AnyNamespacePresentValidator;
+import dev.kinau.resourcepackvalidator.validator.general.InvalidPathValidator;
 import dev.kinau.resourcepackvalidator.validator.general.UnusedFileValidator;
 import dev.kinau.resourcepackvalidator.validator.generic.FilterValidator;
 import dev.kinau.resourcepackvalidator.validator.generic.JsonElementMapper;
 import dev.kinau.resourcepackvalidator.validator.generic.NamespaceCollectionValidator;
-import dev.kinau.resourcepackvalidator.validator.models.ModelHasAnyTextureValidator;
-import dev.kinau.resourcepackvalidator.validator.models.ModelIsJsonObjectValidator;
-import dev.kinau.resourcepackvalidator.validator.models.ModelRequiresOverlayOverrideValidator;
-import dev.kinau.resourcepackvalidator.validator.models.ModelTexturesExistsValidator;
+import dev.kinau.resourcepackvalidator.validator.models.*;
 import dev.kinau.resourcepackvalidator.validator.models.override.ModelHasAnyOverrideValidator;
 import dev.kinau.resourcepackvalidator.validator.models.override.ModelOverridesExistsValidator;
 import dev.kinau.resourcepackvalidator.validator.texture.TextureFilterMapper;
@@ -52,7 +50,8 @@ public class ValidatorRegistry {
             }
         };
 
-        rootValidator.then(new NamespaceCollectionValidator(configData, testSuite)
+        rootValidator
+                .then(new NamespaceCollectionValidator(configData, testSuite)
                         .then(new AnyNamespacePresentValidator(configData, testSuite)))
                 .then(new JsonElementMapper(configData, testSuite, FileUtils.Directory.MODELS)
                         .thenForEachElement(new ModelIsJsonObjectValidator(configData, testSuite)
@@ -60,7 +59,10 @@ public class ValidatorRegistry {
                                         .then(new ModelTexturesExistsValidator(configData, testSuite)))
                                 .then(new ModelHasAnyOverrideValidator(configData, testSuite)
                                         .then(new ModelOverridesExistsValidator(configData, testSuite)))
-                                .then(new ModelRequiresOverlayOverrideValidator(configData, testSuite))))
+                                .then(new ModelRequiresOverlayOverrideValidator(configData, testSuite))
+                                .then(new ModelParentValidator(configData, testSuite))
+                                .then(new ModelTextureReferencesResolvableValidator(configData, testSuite)
+                                        .then(new ModelHasParticleTextureValidator(configData, testSuite)))))
                 .then(new JsonElementMapper(configData, testSuite, FileUtils.Directory.FONT)
                         .thenForEachElement(new FontProviderMapper(configData, testSuite)
                                 .thenForEachElement(new FilterValidator<FontProvider, FileContext, BitmapFontProvider>(configData, testSuite, this::isBitmapFontProvider)
@@ -70,6 +72,7 @@ public class ValidatorRegistry {
                         .thenForEachElement(new TextureIsNotCorruptedValidator(configData, testSuite)
                                 .then(new TextureFilterMapper(configData, testSuite, this::isPartOfAtlas)
                                         .then(new TextureLimitMipLevelValidator(configData, testSuite)))))
+                .then(new InvalidPathValidator(configData, testSuite))
                 .then(new UnusedFileValidator(configData, testSuite));
     }
 
@@ -85,7 +88,7 @@ public class ValidatorRegistry {
     }
 
     private boolean isPartOfAtlas(ValidationJob job, FileContextWithData<BufferedImage> context) {
-        return job.textureAtlas().get(context.namespace()).isPartOfAtlas(context.value());
+        return job.textureAtlas().isPartOfAtlas(context.namespace(), context.value());
     }
 
 }

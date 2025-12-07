@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/github/license/MrKinau/ResourcePackValidator)](https://github.com/MrKinau/ResourcePackValidator/blob/master/LICENSE)
 [![Discord](https://img.shields.io/discord/550764567282712583?logo=discord)](https://discord.gg/xHpCDYf)
 
-A commandline tool to validate a Minecraft Java Edition resource pack. It runs several validations, that normally run while loading the resource pack in the vanilla client as well as some extra validations to identify issues.
+A commandline tool to validate a Minecraft Java Edition resource pack. It runs several validations, that normally run when loading the resource pack in the vanilla client as well as some extra validations to identify issues.
 
 ## Commandline Arguments
 - `-help` Show all available commandline arguments
@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Validate Resource Pack
-        uses: MrKinau/ResourcePackValidator@v1
+        uses: MrKinau/ResourcePackValidator@v2
         with:
           resourcepack: resourcepack
           config: config.json
@@ -87,11 +87,11 @@ All currently implemented Validators can be found [here](doc/VALIDATORS.md).
 Extend detection, to find models which do not have an override or override a vanilla item. 
 Also check all textures if they are used by a model which already is unused?
 
-### Parent Validator
-Validate parent entries: Does the parent model exist
-
 ### Animated texture frames missing / too many sprite frames
 Checks if an animated texture has too many / too few frames.
+
+### Version support
+There is no way to enforce a specific minecraft version, vanilla resources from different 1.20 and 1.21 versions are merged to validate against.
 
 ## Discord
 To follow the project, get support or request features or bugs you can join my Discord: https://discord.gg/xHpCDYf

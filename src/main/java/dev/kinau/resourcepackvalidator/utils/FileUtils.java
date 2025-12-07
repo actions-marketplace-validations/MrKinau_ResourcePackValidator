@@ -1,6 +1,7 @@
 package dev.kinau.resourcepackvalidator.utils;
 
 import dev.kinau.resourcepackvalidator.cache.AssetDictionary;
+import dev.kinau.resourcepackvalidator.validator.context.FileContext;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -79,7 +80,8 @@ public class FileUtils {
     }
 
     private static File getFile(Directory directory, OverlayNamespace defaultNamespace, String relPath, String suffix) {
-        File filesDir = directory.getFile(defaultNamespace);
+        // default namespace is always minecraft
+        File filesDir = directory.getFile(new File(FileUtils.getAssetsDir(defaultNamespace.getOverlayOrRootDir()), "minecraft"));
 
         File file = new File(filesDir, relPath.replace("/", File.separator) + suffix);
         if (relPath.contains(":")) {
@@ -157,5 +159,35 @@ public class FileUtils {
                     .map(Path::toFile)
                     .forEach(File::delete);
         }
+    }
+
+    public static boolean isArmorModel(File file, OverlayNamespace namespace) {
+        if (file == null || !file.exists()) return false;
+
+        File equipmentModels = new File(namespace.getAssetsDir(), "models/equipment");
+        if (!equipmentModels.exists()) return false;
+
+        return file.toPath().startsWith(equipmentModels.toPath());
+    }
+
+    public static String stripNamespace(String path) {
+        if (path.contains(":"))
+            path = path.substring(path.indexOf(":") + 1);
+        return path;
+    }
+
+    public static String getRelPath(FileContext context, Directory directory) {
+        return getRelPath(context.value(), directory, context.namespace().getNamespaceName());
+    }
+
+    public static String getRelPath(File file, Directory directory, String namespaceName) {
+        String relPath = "";
+        String[] parts = file.getPath().split("assets" + File.separator + namespaceName + File.separator + directory.getPath() + File.separator);
+        if (parts.length > 1)
+            relPath = parts[1];
+        if (relPath.endsWith(".json"))
+            relPath = relPath.substring(0, relPath.length() - 5);
+        relPath = stripNamespace(relPath);
+        return relPath;
     }
 }

@@ -19,24 +19,25 @@ import java.util.List;
 @Slf4j
 public class TextureAtlas {
 
-    private final OverlayNamespace namespace;
     private AtlasData data;
 
-    public TextureAtlas(OverlayNamespace namespace) {
-        this.namespace = namespace;
+    public TextureAtlas(File rootDir, Gson gson) {
         try {
-            File atlasDir = FileUtils.Directory.ATLASES.getFile(namespace);
+            File atlasDir = FileUtils.Directory.ATLASES.getFile(rootDir, "minecraft");
             File blocksAtlas = new File(atlasDir, "blocks.json");
-            if (!blocksAtlas.exists()) return;
-            this.data = new Gson().fromJson(new FileReader(blocksAtlas), AtlasData.class);
-            data.sources().add(new AtlasSource("directory", "item", "", null, null));
-            data.sources().add(new AtlasSource("directory", "block", "", null, null));
+            if (blocksAtlas.exists()) {
+                this.data = gson.fromJson(new FileReader(blocksAtlas), AtlasData.class);
+            } else {
+                this.data = new AtlasData();
+            }
+            data.sources().add(new AtlasSource("directory", "item", "", null, null, null));
+            data.sources().add(new AtlasSource("directory", "block", "", null, null, null));
         } catch (Exception ex) {
-            log.error("Could not load blocks atlas for " + namespace.getName() + " at " + namespace.getAssetsDir().getPath(), ex);
+            log.error("Could not load blocks atlas", ex);
         }
     }
 
-    public boolean isPartOfAtlas(File file) {
+    public boolean isPartOfAtlas(OverlayNamespace namespace, File file) {
         if (data == null) return false;
         return data.sources().stream().anyMatch(atlasSource -> atlasSource.isInAtlas(namespace, file));
     }
@@ -46,6 +47,14 @@ public class TextureAtlas {
     @ToString
     public static class AtlasData {
         private final List<AtlasSource> sources = new ArrayList<>();
+    }
+
+    @Getter
+    @Accessors(fluent = true)
+    @ToString
+    public static class AtlasFilterType {
+        private String namespace;
+        private String path;
     }
 
     //TODO: Add "filter" and "unstitch" type and use inherited classes
@@ -62,12 +71,18 @@ public class TextureAtlas {
         private String resource;
         private String sprite;
 
+        private AtlasFilterType pattern;
+
         public boolean isInAtlas(OverlayNamespace namespace, File file) {
             String path = file.getPath();
             String namespacePath = namespace.getAssetsDir().getPath();
             path = path.replace(namespacePath, "").replace("/textures", "");
             if (path.startsWith("/"))
                 path = path.substring(1);
+
+            String type = this.type;
+            if (type.startsWith("minecraft:"))
+                type = type.substring(10);
 
             if (type.equals("single")) {
                 if (resource != null) {
@@ -89,8 +104,12 @@ public class TextureAtlas {
                 } else {
                     return false;
                 }
+            } else if (type.equals("filter")) {
+                // TODO filter atlas type
+                return false;
             }
-            return true;
+            log.warn("Detected unknown texture atlas type: {}, ignoring it", this.type);
+            return false;
         }
     }
 }

@@ -13,6 +13,11 @@ This is the default config:
       "logLevel": "ERROR",
       "ignore": []
     },
+    "ModelParentValidator": {
+      "enabled": true,
+      "logLevel": "ERROR",
+      "ignore": []
+    },
     "ModelHasAnyTextureValidator": {
       "enabled": true,
       "logLevel": "WARN",
@@ -23,6 +28,16 @@ This is the default config:
       "logLevel": "ERROR",
       "ignore": []
     },
+    "ModelTextureReferencesResolvableValidator": {
+      "enabled": true,
+      "logLevel": "ERROR",
+      "ignore": []
+    },
+    "ModelHasParticleTextureValidator": {
+      "enabled": true,
+      "logLevel": "WARN",
+      "ignore": []
+    },
     "ModelOverridesExistsValidator": {
       "enabled": true,
       "logLevel": "ERROR",
@@ -30,7 +45,7 @@ This is the default config:
     },
     "UnusedFileValidator": {
       "enabled": true,
-      "logLevel": "ERROR",
+      "logLevel": "WARN",
       "ignore": []
     },
     "TextureIsNotCorruptedValidator": {
@@ -44,6 +59,11 @@ This is the default config:
       "ignore": []
     },
     "FontCharacterUsageValidator": {
+      "enabled": true,
+      "logLevel": "ERROR",
+      "ignore": []
+    },
+    "InvalidPathValidator": {
       "enabled": true,
       "logLevel": "ERROR",
       "ignore": []
@@ -89,8 +109,14 @@ Some validators may require additional data in order to work.
       "enabled": true,
       "required": [
         {
-          "path": "glob:**/cosmetics/back/**",
-          "overlays": [ "1_20_2" ]
+          "path": "glob:**/minecraft/models/equipment/**",
+          "overlays": [ "1_21_4" ],
+          "replacements": [
+            {
+              "path": "/models/equipment/",
+              "replacement": "/equipment/"
+            }
+          ]
         }
       ]
     }
